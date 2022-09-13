@@ -30,20 +30,6 @@ class MIDIEvent:
         self.time=0
         self.ord = 0
         
-    def __lt__(self, other):
-        ''' Sorting function for events.'''
-        if self.time < other.time:
-            return True
-        elif self.time > other.time:
-            return False
-        else:
-            if self.ord < other.ord:
-                return True
-            elif self.ord > other.ord:
-                return False
-            else:
-                return False
-
     def __cmp__(self, other):
         ''' Sorting function for events.'''
         if self.time < other.time:
@@ -234,9 +220,9 @@ class MIDITrack:
     def __init__(self, removeDuplicates,  deinterleave):
         '''Initialize the MIDITrack object.
         '''
-        self.headerString = struct.pack('cccc',b'M',b'T',b'r',b'k')
+        self.headerString = struct.pack('cccc','M','T','r','k')
         self.dataLength = 0 # Is calculated after the data is in place
-        self.MIDIdata = b""
+        self.MIDIdata = ""
         self.closed = False
         self.eventList = []
         self.MIDIEventList = []
@@ -390,13 +376,13 @@ class MIDITrack:
                 self.MIDIEventList.append(event)
 
             else:
-                print ("Error in MIDITrack: Unknown event type")
+                print "Error in MIDITrack: Unknown event type"
                 sys.exit(2)
             
         # Assumptions in the code expect the list to be time-sorted.
         # self.MIDIEventList.sort(lambda x, y: x.time - y.time)
 
-        self.MIDIEventList.sort(key=lambda x: (x.time))
+        self.MIDIEventList.sort(lambda x, y: int( 1000 * (x.time - y.time)))
 
         if self.deinterleave:    
             self.deInterleaveNotes()
@@ -416,13 +402,13 @@ class MIDITrack:
         for item in self.eventList:
             tempDict[item] = 1
             
-        self.eventList = list(tempDict.keys())
+        self.eventList = tempDict.keys()
         
         # Sort on type, them on time. Necessary because keys() has no requirement to return
         # things in any order.
         
-        self.eventList.sort(key=lambda x: (x.type))
-        self.eventList.sort(key=lambda x: (x.time)) #A bit of a hack.
+        self.eventList.sort(lambda x, y: cmp(x.type ,  y.type))
+        self.eventList.sort(lambda x, y: int( 1000 * (x.time - y.time))) #A bit of a hack.
 
     def closeTrack(self):
         '''Called to close a track before writing
@@ -475,7 +461,7 @@ class MIDITrack:
             # Convert the time to variable length and back, to see how much
             # error is introduced
 
-            testBuffer = bytes()
+            testBuffer = ""
             varTime = writeVarLength(event.time)
             for timeByte in varTime:
                 testBuffer = testBuffer + struct.pack('>B',timeByte)
@@ -490,7 +476,7 @@ class MIDITrack:
 
             # Now update the actualTime value, using the updated event time.
 
-            testBuffer = bytes()
+            testBuffer = ""
             varTime = writeVarLength(event.time)
             for timeByte in varTime:
                 testBuffer = testBuffer + struct.pack('>B',timeByte)
@@ -543,7 +529,7 @@ class MIDITrack:
                 dataLenghtVar = writeVarLength(dataLength)
                 for i in range(0,len(dataLenghtVar)):
                     self.MIDIdata = self.MIDIdata + struct.pack("b",dataLenghtVar[i])
-                self.MIDIdata = self.MIDIdata + event.trackName.encode()
+                self.MIDIdata = self.MIDIdata + event.trackName
             elif event.type == "ControllerEvent":
                 code = 0xB << 4 | event.channel
                 varTime = writeVarLength(event.time)
@@ -604,7 +590,7 @@ class MIDITrack:
         for event in self.MIDIEventList:
             
             if event.type == 'NoteOn':
-                if str(event.pitch)+str(event.channel) in stack:
+                if stack.has_key(str(event.pitch)+str(event.channel)):
                     stack[str(event.pitch)+str(event.channel)].append(event.time)
                 else:
                     stack[str(event.pitch)+str(event.channel)] = [event.time]
@@ -627,8 +613,8 @@ class MIDITrack:
         # the internal sort works, and is in essence creating a sort on a primary 
         # and secondary key.
         
-        self.MIDIEventList.sort(key=lambda x: (x.type))
-        self.MIDIEventList.sort(key=lambda x: (x.time))
+        self.MIDIEventList.sort(lambda x, y: cmp(x.type ,  y.type))
+        self.MIDIEventList.sort(lambda x, y: int( 1000 * (x.time - y.time)))
 
     def adjustTime(self,origin):
         '''
@@ -675,7 +661,7 @@ class MIDIHeader:
     def __init__(self,numTracks):
         ''' Initialize the data structures
         '''
-        self.headerString = struct.pack('cccc',b'M',b'T',b'h',b'd')
+        self.headerString = struct.pack('cccc','M','T','h','d')
         self.headerSize = struct.pack('>L',6)
         # Format 1 = multi-track file
         self.format = struct.pack('>H',1)
@@ -965,7 +951,7 @@ class MIDIFile:
 
     # Note: This code assumes that the MIDIEventList has been sorted, so this should be insured
     # before it is called. It is probably a poor design to do this. 
-    # TODO: -- Consider making this less efficient but more robust by not assuming the list to be sorted.
+    # T ODO: -- Consider making this less efficient but more robust by not assuming the list to be sorted.
     
         for track in self.tracks:
                 if len(track.MIDIEventList) > 0:
@@ -1003,7 +989,9 @@ def writeVarLength(i):
     reversed[2] = output[1]
     reversed[3] = output[0]
     return reversed[4-count:4]
-    
+
+# readVarLength is taken from the MidiFile class.
+
 def readVarLength(offset, buffer):
     '''A function to read a MIDI variable length variable.
 

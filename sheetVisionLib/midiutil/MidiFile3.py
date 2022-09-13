@@ -965,7 +965,7 @@ class MIDIFile:
 
     # Note: This code assumes that the MIDIEventList has been sorted, so this should be insured
     # before it is called. It is probably a poor design to do this. 
-    # TODO: -- Consider making this less efficient but more robust by not assuming the list to be sorted.
+    # T ODO: -- Consider making this less efficient but more robust by not assuming the list to be sorted.
     
         for track in self.tracks:
                 if len(track.MIDIEventList) > 0:

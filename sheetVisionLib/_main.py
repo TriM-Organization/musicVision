@@ -4,45 +4,47 @@ import subprocess
 import cv2
 # import time
 import numpy as np
-from new_best_fit import fit
-from rectangle import Rectangle
-from note import Note
+from .new_best_fit import fit
+from .rectangle import Rectangle
+from .note import Note
 from random import randint
-from midiutil.MidiFile3 import MIDIFile
+from .midiutil.MidiFile3 import MIDIFile
 
 
 # ORB特征点匹配图像载入
 
 # 1.路径设置
 staff_files = [
-    "resources/template/staff2.png",
-    "resources/template/staff.png"]
+    "./sheetVisionLib/resources/template/staff2.png",
+    "./sheetVisionLib/resources/template/staff.png"]
 quarter_files = [
-    "resources/template/quarter.png",
-    "resources/template/solid-note.png"]
+    "./sheetVisionLib/resources/template/quarter.png",
+    "./sheetVisionLib/resources/template/solid-note.png"]
 sharp_files = [
-    "resources/template/sharp.png"]
+    "./sheetVisionLib/resources/template/sharp.png"]
 flat_files = [
-    "resources/template/flat-line.png",
-    "resources/template/flat-space.png"]
+    "./sheetVisionLib/resources/template/flat-line.png",
+    "./sheetVisionLib/resources/template/flat-space.png"]
 half_files = [
-    "resources/template/half-space.png",
-    "resources/template/half-note-line.png",
-    "resources/template/half-line.png",
-    "resources/template/half-note-space.png"]
+    "./sheetVisionLib/resources/template/half-space.png",
+    "./sheetVisionLib/resources/template/half-note-line.png",
+    "./sheetVisionLib/resources/template/half-line.png",
+    "./sheetVisionLib/resources/template/half-note-space.png"]
 whole_files = [
-    "resources/template/whole-space.png",
-    "resources/template/whole-note-line.png",
-    "resources/template/whole-line.png",
-    "resources/template/whole-note-space.png"]
+    "./sheetVisionLib/resources/template/whole-space.png",
+    "./sheetVisionLib/resources/template/whole-note-line.png",
+    "./sheetVisionLib/resources/template/whole-line.png",
+    "./sheetVisionLib/resources/template/whole-note-space.png"]
 
+switch = False
 # 2.图片对象在cv中打开
-staff_imgs = [cv2.imread(staff_file, 0) for staff_file in staff_files]
-quarter_imgs = [cv2.imread(quarter_file, 0) for quarter_file in quarter_files]
-sharp_imgs = [cv2.imread(sharp_files, 0) for sharp_files in sharp_files]
-flat_imgs = [cv2.imread(flat_file, 0) for flat_file in flat_files]
-half_imgs = [cv2.imread(half_file, 0) for half_file in half_files]
-whole_imgs = [cv2.imread(whole_file, 0) for whole_file in whole_files]
+if switch:
+    staff_imgs = [cv2.imread(staff_file, 0) for staff_file in staff_files]
+    quarter_imgs = [cv2.imread(quarter_file, 0) for quarter_file in quarter_files]
+    sharp_imgs = [cv2.imread(sharp_files, 0) for sharp_files in sharp_files]
+    flat_imgs = [cv2.imread(flat_file, 0) for flat_file in flat_files]
+    half_imgs = [cv2.imread(half_file, 0) for half_file in half_files]
+    whole_imgs = [cv2.imread(whole_file, 0) for whole_file in whole_files]
 
 # 3.匹配数据载入
 staff_lower, staff_upper, staff_thresh = 50, 150, 0.77
@@ -179,7 +181,7 @@ if __name__ == "__main__":
     open_file('staff_recs_img.png')
 
     print("-------------------------------------------")
-    print(5/0)
+    # print(5/0)
 
     print("Discovering staff locations...")
     staff_boxes = merge_recs([Rectangle(0, r.y, img_width, r.h)

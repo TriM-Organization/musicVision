@@ -29,3 +29,7 @@ class NotLoadedError(ArchiveError):  # 尝试在未设定路径时加载
 
 class InformationGone(ArchiveError):  # #号头标缺失
     pass
+
+
+class PictureNotExist(ArchiveError):  # 图片is None
+    pass

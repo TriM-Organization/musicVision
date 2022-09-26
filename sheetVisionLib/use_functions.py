@@ -3,9 +3,12 @@ import objectStateConstants as osc
 import exceptions
 import copy
 import numpy
-
+from bgArrayLogger import *
+import cv2
 
 debugger = osc.ObjectStateConstant()
+
+
 # print(debugger.isDebugging)
 
 
@@ -21,6 +24,11 @@ class SheetVisionLib:
         self.now_img_width = 0
         self.now_img_height = 0
         self.now_pic_grey = numpy.ndarray([])
+
+        self.now_staff_rectangles = numpy.ndarray([])
+        self.now_staff_boxes = numpy.ndarray([])
+
+        self.now_rectangles = {}
 
     def pictures_path_load(self, value: dict) -> None:
         for i_ in ["staff_files", "quarter_files", "sharp_files", "flat_files", "half_files", "whole_files"]:
@@ -47,6 +55,7 @@ class SheetVisionLib:
             for img_files in self.pic_path[imgs_type]:
                 self.pic_class[imgs_type][index] = cv2.imread(img_files, 0)
                 # https://blog.csdn.net/qq_37924224/article/details/119181028
+                index += 1
         if debugger.isDebugging:
             for i_ in self.pic_class.keys():
                 debugger.dp(self.pic_class[i_].__len__())
@@ -89,7 +98,8 @@ class SheetVisionLib:
 
     @staticmethod
     def show_pic(path: str) -> None:
-        open_file(path)
+        if debugger.isPicShowing:
+            open_file(path)
 
     def pictures_initialize(self, in_path: str) -> None:
         img_file_ = os.path.abspath(in_path)
@@ -127,8 +137,78 @@ class SheetVisionLib:
         # 版权声明：本文为CSDN博主「天地一扁舟」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
         # 原文链接：https://blog.csdn.net/qingyuanluofeng/article/details/51568741
 
-    def sample_match(self):
-        pass
+    def base_match(self) -> None:
+        logger.info("SheetVisionLib.base_match() is being used.")
+
+        logChi_Eng(("正在匹配空白五线谱图像...", "Matching staff image..."))
+
+        self.now_staff_rectangles = self.pictures_locating(
+            self.now_pic_grey,
+            self.pic_class["staff_files"],
+            self.pic_datas["staff"]["lower"],
+            self.pic_datas["staff"]["upper"],
+            self.pic_datas["staff"]["thresh"])
+
+        logChi_Eng(("正在筛选弱空白五线谱匹配...", "Filtering weak staff matches..."))
+
+        self.now_staff_rectangles = [index_j for index_i in self.now_staff_rectangles for index_j in index_i]
+        height_s = [index_r.y for index_r in self.now_staff_rectangles] + [0]
+        histo_s = [height_s.count(index_i) for index_i in range(0, max(height_s) + 1)]
+        average = numpy.mean(list(set(histo_s)))  # 求列表平均值
+        self.now_staff_rectangles = [index_r for index_r in self.now_staff_rectangles if histo_s[index_r.y] > average]
+
+        logChi_Eng(("正在合并空白五线谱图像结果...", "Merging staff image results..."))
+
+        self.now_staff_rectangles = self.merge_rectangles(self.now_staff_rectangles, 0.01)
+        staff_rectangles_img = self.now_pic.copy()
+        for index_r in self.now_staff_rectangles:
+            index_r.draw(staff_rectangles_img, (0, 0, 255), 2)
+        cv2.imwrite('staff_recs_img.png', staff_rectangles_img)
+        self.show_pic('staff_recs_img.png')
+
+        logChi_Eng(("正在查找谱号位置...", "Discovering staff locations..."))
+
+        self.now_staff_rectangles = self.merge_rectangles([Rectangle(0, index_r.y, self.now_img_width, index_r.h)
+                                                           for index_r in self.now_staff_rectangles], 0.01)
+        staff_boxes_image = self.now_pic.copy()
+        for index_r in self.now_staff_rectangles:
+            index_r.draw(staff_boxes_image, (0, 0, 255), 2)
+        cv2.imwrite('staff_boxes_img.png', staff_boxes_image)
+        self.show_pic('staff_boxes_img.png')
+
+        logger.info("SheetVisionLib.base_match() had finished successfully.")
+
+    def sample_match(self, matchThing: tuple[str, str]) -> None:
+        logger.info("SheetVisionLib.sample_match() is being used.(args: {0})".format(str({"matchThing": matchThing})))
+
+        logChi_Eng(("正在匹配{0}图像...".format(matchThing[0]), "Matching {0} image...".format(matchThing[1])))
+
+        try:
+            _rectangles = self.pictures_locating(
+                self.now_pic_grey,
+                self.pic_class["{0}_files".format(matchThing[1])],
+                self.pic_datas[matchThing[1]]["lower"],
+                self.pic_datas[matchThing[1]]["upper"],
+                self.pic_datas[matchThing[1]]["thresh"])
+        except KeyError:
+            raise exceptions.NameOrKeyError
+
+        logChi_Eng(("正在合并{0}结果...".format(matchThing[0]), "Merging {0} image results...".format(matchThing[1])))
+
+        _rectangles = self.merge_rectangles([index_j for index_i in _rectangles for index_j in index_i], 0.5)
+
+        if debugger.isPicDrawing:
+            _recs_img = self.now_pic.copy()
+            for index_r in _rectangles:
+                index_r.draw(_recs_img, (0, 0, 255), 2)
+
+            file_name = "{0}_rectangles_img.png".format(matchThing[1])
+            cv2.imwrite(file_name, _recs_img)
+            self.show_pic(file_name)
+
+        self.now_rectangles[matchThing[1]] = _rectangles
+
+        logger.info("SheetVisionLib.sample_match() had finished successfully.")
 
     def analysis(self):
         pass

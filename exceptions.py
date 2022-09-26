@@ -33,3 +33,7 @@ class InformationGone(ArchiveError):  # #号头标缺失
 
 class PictureNotExist(ArchiveError):  # 图片is None
     pass
+
+
+class NameOrKeyError(ArchiveError):  # 没有定义文件就匹配
+    pass

@@ -11,7 +11,11 @@ func_.pictures_reload()
 
 func_.pictures_data_load(func_.abbreviation_expansion(constants.pictures_data))
 
-func_.pictures_initialize("./sheetVisionLib/inImg/s2-1.png")
+# func_.pictures_initialize("./sheetVisionLib/inImg/s2-1.png")
+func_.pictures_initialize("./sheetVisionLib/inImg/test0.png")
+
+func_.max_min_rectangles()
+print(0/0)
 
 func_.base_match()
 

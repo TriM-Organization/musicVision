@@ -1,6 +1,7 @@
 import cv2
 # import matplotlib.pyplot as plt
 import numpy as np
+from bgArrayLogger import *
 
 
 def fit(img: np.ndarray, templates: list, start_percent: int, stop_percent: int,
@@ -58,7 +59,11 @@ def fit(img: np.ndarray, templates: list, start_percent: int, stop_percent: int,
             result = np.where(result >= threshold)  # 找出数组中满足结果的(>=门槛值)
             location_count += len(result[0])  # 统计符合条件的点数
             locations += [result]  # 坐标获取
-        print("scale: {0}, hits: {1}".format(scale, location_count))
+        if location_count > 0:
+            logger.info("find data>0: scale: {0}, hits: {1}".format(scale, location_count))
+            # print("scale: {0}, hits: {1}".format(scale, location_count))
+        else:
+            print("scale: {0}, hits: {1}".format(scale, location_count))
         x.append(location_count)  # x轴用匹配点
         y.append(scale)  # y轴用比例
         # plt.plot(y, x)

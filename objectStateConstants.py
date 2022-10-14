@@ -5,6 +5,11 @@ class ObjectStateConstant:
         self.versionL = (0, 0, 1)
         self.ParameterSelection = "default=self"
 
+        self.isLoggingUsing = True
+
+        self.isPicShowing = False
+        self.isPicDrawing = True
+
     def debug(self):
         return self.isDebugging
 

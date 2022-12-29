@@ -1,4 +1,7 @@
 from ._main import *
+from .tool_functions import *
+from .lineOpreation import *
+
 import objectStateConstants as osc
 import exceptions
 import copy
@@ -25,10 +28,15 @@ class SheetVisionLib:
         self.now_img_height = 0
         self.now_pic_grey = numpy.ndarray([])
 
+        self.now_max_min = []
+        self.now_obfuscation = numpy.ndarray([])
+
         self.now_staff_rectangles = numpy.ndarray([])
         self.now_staff_boxes = numpy.ndarray([])
 
-        self.now_rectangles = {}
+        self.now_hProjection = numpy.ndarray([])
+
+        self.now_rectangles = {}  # 现在的图片上各种匹配数据
 
     def pictures_path_load(self, value: dict) -> None:
         for i_ in ["staff_files", "quarter_files", "sharp_files", "flat_files", "half_files", "whole_files"]:
@@ -101,6 +109,32 @@ class SheetVisionLib:
         if debugger.isPicShowing:
             open_file(path)
 
+    def max_min_rectangles(self, is_GaussianBlur: bool = False):
+        if is_GaussianBlur:
+            self.now_max_min = max_min(dilate_r(self.now_obfuscation))
+        else:
+            self.now_max_min = max_min(dilate_r(self.now_pic, kernel_in=9))
+
+        # dilate_r(self.now_pic)
+        #
+        self.show_pic("dilate.png")
+
+        debugger.dp(self.now_max_min)
+        self.show_pic("Canny.png")
+        self.show_pic("Max.png")
+        self.show_pic("Min.png")
+
+        merge_min_rectangles(self.now_pic, self.now_max_min)
+        self.show_pic("merge_min.png")
+
+        self.now_hProjection = getHProjection(self.now_pic_grey)
+        self.show_pic("hProjection2.png")
+
+        logger.info("min data(left down, left up, right up, right down): " + str(self.now_max_min[1]))
+        logger.info("hProjection data(white pix count per line): " + str(self.now_hProjection))
+
+        lineO_hProjectionAnalyse(self.now_hProjection, self.now_img_width)
+
     def pictures_initialize(self, in_path: str) -> None:
         img_file_ = os.path.abspath(in_path)
         self.now_pic = cv2.imread(img_file_, 0)
@@ -110,9 +144,11 @@ class SheetVisionLib:
         # cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.now_pic_grey = self.now_pic
         self.now_pic = cv2.cvtColor(self.now_pic_grey, cv2.COLOR_GRAY2RGB)
-        ret_, now_pic_grey = cv2.threshold(self.now_pic_grey, 127, 255, cv2.THRESH_BINARY)
+        ret_, self.now_pic_grey = cv2.threshold(self.now_pic_grey, 127, 255, cv2.THRESH_BINARY)
         del ret_
-        self.now_img_width, self.now_img_height = now_pic_grey.shape[::-1]
+        self.now_img_width, self.now_img_height = self.now_pic_grey.shape[::-1]
+
+        self.now_obfuscation = obfuscation(self.now_pic)
 
         # cv.cvtColor(	src, code[, dst[, dstCn]]
         # 色彩空间转化

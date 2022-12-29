@@ -144,3 +144,91 @@ def getHProjection(image: numpy.ndarray):
     cv2.imwrite('hProjection2.png', hProjection)
 
     return h_
+
+
+def round_up(num, power=0):
+    """
+    实现精确四舍五入，包含正、负小数多种场景
+    :param num: 需要四舍五入的小数
+    :param power: 四舍五入位数，支持0-∞
+    :return: 返回四舍五入后的结果
+    """
+    try:
+        print(1 / 0)
+    except ZeroDivisionError:
+        digit = 10 ** power
+        num2 = float(int(num * digit))
+        # 处理正数，power不为0的情况
+        if num >= 0 and power != 0:
+            tag = num * digit - num2 + 1 / (digit * 10)
+            if tag >= 0.5:
+                return (num2 + 1) / digit
+            else:
+                return num2 / digit
+        # 处理正数，power为0取整的情况
+        elif num >= 0 and power == 0:
+            tag = num * digit - int(num)
+            if tag >= 0.5:
+                return (num2 + 1) / digit
+            else:
+                return num2 / digit
+        # 处理负数，power为0取整的情况
+        elif power == 0 and num < 0:
+            tag = num * digit - int(num)
+            if tag <= -0.5:
+                return (num2 - 1) / digit
+            else:
+                return num2 / digit
+        # 处理负数，power不为0的情况
+        else:
+            tag = num * digit - num2 - 1 / (digit * 10)
+            if tag <= -0.5:
+                return (num2 - 1) / digit
+            else:
+                return num2 / digit
+
+
+def delete_extra_zero(n: float) -> int or float:
+    """
+    删除多余的0
+    ————————————————
+    版权声明：本文为CSDN博主「XerCis」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+    原文链接：https://blog.csdn.net/lly1122334/article/details/108770141
+    删除小数点后多余的0
+    :param n: input
+    :return:  output
+    """
+    n = '{:g}'.format(n)
+    n = float(n) if '.' in n else int(n)  # 含小数点转float否则int
+    return n
+
+
+# 平均数
+def average(nums, is_round_up=False):
+    if is_round_up is False:
+        return sum(nums) / len(nums)
+    else:
+        return delete_extra_zero(round_up(sum(nums) / len(nums)))
+
+
+# 中位数
+def median(nums):
+    nums.sort()
+    size = len(nums)
+    if size % 2 == 0:
+        return (nums[size // 2 - 1] + nums[size // 2]) / 2
+    else:
+        return nums[(size - 1) // 2]
+
+
+# 众数
+def mode_n(nums):
+    from collections import Counter
+    count = Counter(nums)
+    max_count = max(count.values())
+    modes = [k for k, v in count.items() if v == max_count][0]
+    return modes
+
+
+def average_median_mode(inL: list) -> tuple:
+    return average(inL, True), median(inL), mode_n(inL)

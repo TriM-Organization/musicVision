@@ -5,6 +5,10 @@
 
 Use OCR and AI's staff spectrum reading program.
 
+我一般会先更新在develop分支，记得查看。
+
+I usually update in the `develop` branch first, and remember to check.
+
 #### 软件架构 Software Architecture
 现在还没有
 

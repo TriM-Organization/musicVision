@@ -16,11 +16,13 @@ class DifferenceError(ArchiveError):  # 当计算差值列表的众数和中位�
     pass
 
 
-def lineO_hProjectionAnalyse(inI: list, width: int = None):
+def lineO_hProjectionAnalyse(inI: list, width: int = None, is_error: bool = True):
     """
     :param inI 输入的getHProjection()的返回值，是一个list包含每一行的white pix count
     :param width 输入的图片宽度，用以相减获得每一行black pix count，默认None
+    :param is_error 是否抛出错误
     """
+
     h_list = []
     if width is not None:
         for i in inI:
@@ -28,6 +30,10 @@ def lineO_hProjectionAnalyse(inI: list, width: int = None):
     else:
         h_list = inI
     h_list = numpy.array(h_list)
+
+    threshold = 1e6
+    numpy.set_printoptions(threshold=int(threshold))
+    logger.info("grey hP list: " + str(list(h_list)))
     # print(h_list)
 
     continuous = lineO_hProjectionContinuousScanning(h_list)
@@ -48,9 +54,12 @@ def lineO_hProjectionAnalyse(inI: list, width: int = None):
         index += 1
     logger.info("较大线段的纵坐标: " + str(max_round))
 
-    difference = lineO_hProjectionMaxClassifier(max_round)
+    difference = lineO_hProjectionMaxClassifier(max_round, is_error=is_error)
     logger.info("[分界线, 平均线宽]: " + str(difference))
-    base_line = average(difference)
+    if difference == [-1, -1] and is_error is False:
+        base_line = 15
+    else:
+        base_line = average(difference)
 
     diff_arr = []
     # 遍历数组，计算每两个数之间的差
@@ -118,9 +127,10 @@ def lineO_hProjectionContinuousScanning(inL: numpy.ndarray) -> list:
     return return_list
 
 
-def lineO_hProjectionMaxClassifier(inL: list) -> list:
+def lineO_hProjectionMaxClassifier(inL: list, is_error: bool = True) -> list:
     """
     :param inL 输入列表
+    :param is_error 是否抛出错误
 
     :return: 输出列表：[31, 12] [分界线, 平均线宽]
     """
@@ -133,10 +143,15 @@ def lineO_hProjectionMaxClassifier(inL: list) -> list:
 
     a_m_m = average_median_mode(diff_arr)
 
+    # +3修正误差
     if a_m_m[1] == a_m_m[2]:
-        return [a_m_m[0], a_m_m[1]]
+        return [a_m_m[0], a_m_m[1] + 3]
     else:
         if a_m_m[1] - a_m_m[2] <= 2:
-            return [a_m_m[0], a_m_m[2]]
+            return [a_m_m[0], a_m_m[2] + 3]
         else:
-            raise DifferenceError("当计算差值列表的众数和中位数的差值过大时抛出")
+            logger.error(a_m_m)
+            if is_error:
+                raise DifferenceError("当计算差值列表的众数和中位数的差值过大时抛出")
+            else:
+                return [-1, -1]

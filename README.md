@@ -6,9 +6,9 @@
 
 An OMR (Optical music recognition) project that used OCR and AI.
 
-我一般会先更新在develop分支，记得查看。
+我一般会先更新在develop分支，并且一般更新在gitee，记得查看。
 
-I usually update in the `develop` branch first, and remember to check.
+I usually update in the `develop` branch first which is on gitee, and remember to check.
 
 #### 软件架构 Software Architecture
 
